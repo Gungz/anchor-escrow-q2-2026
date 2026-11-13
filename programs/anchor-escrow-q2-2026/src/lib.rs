@@ -28,6 +28,12 @@ pub mod anchor_escrow_q2_2026 {
 
     #[instruction(discriminator = 2)]
     pub fn refund(ctx: Context<Refund>) -> Result<()> {
+        ctx.accounts.check_expiration()?;
         ctx.accounts.refund_and_close_vault()
+    }
+
+    #[instruction(discriminator = 3)]
+    pub fn update(ctx: Context<Update>, receive: u64, expiration: i64) -> Result<()> {
+        ctx.accounts.update_terms(receive, expiration)
     }
 }

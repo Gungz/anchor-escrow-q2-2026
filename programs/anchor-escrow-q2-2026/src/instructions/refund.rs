@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked, CloseAccount, close_account};
 
-use crate::{ESCROW_SEED, state::Escrow};
+use crate::{ESCROW_SEED, error::ErrorCode, state::Escrow};
 
 #[derive(Accounts)]
 pub struct Refund<'info> {
@@ -34,6 +34,16 @@ pub struct Refund<'info> {
 }
 
 impl<'info> Refund<'info> {
+    // The maker can only reclaim the funds once the deadline has passed.
+    // While the escrow is live, the taker is the only one who can redeem it.
+    pub fn check_expiration(&self) -> Result<()> {
+        require!(
+            Clock::get()?.unix_timestamp >= self.escrow.expiration,
+            ErrorCode::EscrowNotExpired
+        );
+        Ok(())
+    }
+
     //Refund tokens from vault to maker and close vault
     pub fn refund_and_close_vault(&mut self) -> Result<()> {
         let signer_seeds: [&[&[u8]]; 1] = [&[

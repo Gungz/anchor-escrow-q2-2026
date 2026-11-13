@@ -4,7 +4,7 @@ use anchor_spl::{
     associated_token::AssociatedToken,
     token_interface::{transfer_checked, Mint, TokenAccount, TokenInterface, TransferChecked},
 };
-use crate::{ESCROW_SEED, Escrow};
+use crate::{ESCROW_SEED, error::ErrorCode, Escrow};
 
 #[derive(Accounts)]
 #[instruction(seed: u64)]
@@ -49,6 +49,11 @@ pub struct Make<'info> {
 impl<'info> Make<'info> {
     //Initialize escrow
     pub fn init_escrow(&mut self, seed: u64, receive: u64, bumps: &MakeBumps, expiration: i64) -> Result<()> {
+        //The expiration must be a unix timestamp in the future, and the
+        //maker must ask for at least one unit of mint_b, otherwise the
+        //escrow is either instantly redeemable for nothing or untakeable.
+        require!(expiration > Clock::get()?.unix_timestamp, ErrorCode::InvalidExpiration);
+        require!(receive > 0, ErrorCode::InvalidReceiveAmount);
 
         self.escrow.set_inner(Escrow {
             seed,

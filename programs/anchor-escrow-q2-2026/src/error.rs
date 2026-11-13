@@ -4,4 +4,10 @@ use anchor_lang::prelude::*;
 pub enum ErrorCode {
     #[msg("The escrow has expired")]
     EscrowExpired,
+    #[msg("The escrow has not expired yet")]
+    EscrowNotExpired,
+    #[msg("The expiration must be a unix timestamp in the future")]
+    InvalidExpiration,
+    #[msg("The receive amount must be greater than zero")]
+    InvalidReceiveAmount,
 }
